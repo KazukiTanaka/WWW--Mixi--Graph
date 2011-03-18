@@ -1,0 +1,111 @@
+# exmple perl Catalyst Controller.
+
+package MyApp::Controller::Root;
+use Moose;
+use namespace::autoclean;
+use constant {
+    CONSUMER_KEY    => '',
+    CONSUMER_SECRET => '',
+    REDIRECT_URI    => 'http://HOGE/callback',
+};
+# path to this lib
+use lib ("/home/hoge/work/Mixi/lib");
+use Mixi::Graph;
+use Data::Dumper;
+
+BEGIN { extends 'Catalyst::Controller' }
+
+__PACKAGE__->config(namespace => '');
+
+sub index :Path :Args(0) {
+    my ( $self, $c ) = @_;
+
+    my $mixi = $self->mixi();
+
+    $c->res->redirect(
+        $mixi->authorize->extend_permissions(qw/ r_profile r_voice w_voice r_photo w_photo /)->uri_as_string
+    );
+    $c->log->debug('after redirect');
+
+    $c->response->body( 'Happy' );
+}
+
+
+sub callback :Path('callback') :Args(0) {
+    my ( $self, $c ) = @_;
+    my $code = $c->req->param('code');
+
+    my $mixi = $self->mixi();
+    $mixi->request_access_token($code);
+    #warn Data::Dumper::Dumper$mixi->fetch('2/groups/@me');
+    #warn Data::Dumper::Dumper$mixi->fetch('2/people/@me/@self');
+    #warn Data::Dumper::Dumper$mixi->fetch('2/voice/statuses/@me/user_timeline');
+    #warn Data::Dumper::Dumper$mixi->photo( count => 30, startIndex => 1)->albums->get->as_hashref;
+
+    # voice ranking favorite, reply
+    my $timeline = $mixi->voice(count => 200)->user_timeline->get('@me')->as_hashref;
+    my @favorite;
+    my @reply;
+    for my $status (@$timeline) {
+        if (defined $status->{favorite_count} ) {
+             push @favorite, {
+                id => $status->{id},
+                count => $status->{favorite_count},
+             };
+        }
+        if (defined $status->{reply_count} ){
+             push @reply, {
+                id => $status->{id},
+                count => $status->{reply_count},
+             };
+        }
+    }
+    my @sorted_favorite = sort {$b->{count} <=> $a->{count} } @favorite;
+    my @sorted_reply = sort {$b->{count} <=> $a->{count} } @reply;
+    
+    my @result;
+    for my $status (@$timeline) {
+        if (grep { $_->{id} eq $status->{id} } @sorted_favorite[0..4] ) {
+            $status->{favorite_list} = $mixi->voice->favorites(post_id => $status->{id})->get->as_hashref;
+            push @result, $status;
+        }
+        if (grep { $_->{id} eq $status->{id} } @sorted_reply[0..4] ) {
+            $status->{reply_list} = $mixi->voice->replies(post_id => $status->{id})->get->as_hashref;
+            push @result, $status;
+        }
+    }
+    $c->stash->{contents} = \@result;
+    $c->forward('View::JSON');
+}
+
+sub mixi :Private {
+    my ( $self, $c ) = @_;
+    
+    return Mixi::Graph->new(
+        client_id       => CONSUMER_KEY,
+        client_secret   => CONSUMER_SECRET,
+        redirect_uri    => REDIRECT_URI,
+    );
+}
+
+=head2 default
+
+Standard 404 error page
+
+=cut
+
+sub default :Path {
+    my ( $self, $c ) = @_;
+    $c->response->body( 'Page not found' );
+    $c->response->status(404);
+}
+
+sub end : Private {
+    my ( $self, $c ) = @_;
+
+    $c->forward( 'MyApp::View::TT' ) 
+      unless ( $c->res->body || !$c->stash->{template} );
+}
+__PACKAGE__->meta->make_immutable;
+
+1;
