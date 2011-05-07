@@ -35,7 +35,7 @@ has token => (
     }
 );
 
-has expires => (
+has expires_in => (
     is      => 'ro',
     lazy    => 1,
     default => sub {

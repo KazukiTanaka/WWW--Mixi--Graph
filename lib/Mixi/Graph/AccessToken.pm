@@ -18,6 +18,11 @@ has grant_type => (
     default => 'authorization_code',
 );
 
+has refresh_token => (
+    is      => 'rw',
+    default => '',
+);
+
 has client_secret => (
     is      => 'ro',
     required=> 1,
@@ -25,12 +30,12 @@ has client_secret => (
 
 has redirect_uri => (
     is      => 'ro',
-    required=> 1,
+    required=> 0,
 );
 
 has code => (
     is      => 'ro',
-    required=> 1,
+    required=> 0,
 );
 
 sub set_grant_type {
@@ -48,6 +53,7 @@ sub request {
         client_secret   => $self->client_secret,
         code            => $self->code,
         redirect_uri    => $self->redirect_uri,
+        refresh_token   => $self->refresh_token,
     });
     return Mixi::Graph::AccessToken::Response->new(response => $response);
 }

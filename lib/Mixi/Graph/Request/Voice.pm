@@ -32,6 +32,16 @@ has attach_photo => (
     predicate   => 'has_attach_photo',
 );
 
+#TODO utf8 check
+has status => (
+    is          => 'rw',
+    predicate   => 'has_status',
+);
+has text => (
+    is          => 'rw',
+    predicate   => 'has_text',
+);
+
 sub statuses{
     my ($self, %params) = @_;
     if ($params{post_id}) {
@@ -40,8 +50,11 @@ sub statuses{
     if ($params{trim_user}) {
         $self->trim_user($params{trim_user});
     }
-    if ($params{attache_photo}) {
-        $self->sttache_photo($params{attach_photo});
+    if ($params{attach_photo}) {
+        $self->attach_photo($params{attach_photo});
+    }
+    if ($params{status}) {
+        $self->status($params{status});
     }
 
     $self->sub_path([qw/ statuses / ]);
@@ -52,6 +65,9 @@ sub user_timeline{
     my ($self, %params) = @_;
     if ($params{since_id}) {
         $self->since_id($params{since_id});
+    }
+    if ($params{user_id}) {
+        $self->user_id($params{user_id});
     }
 
     $self->sub_path( [ qw/ statuses /, $self->user_id, qw/ user_timeline / ]);
@@ -76,6 +92,9 @@ sub replies{
     my ($self, %params) = @_;
     if ($params{post_id}) {
         $self->post_id($params{post_id});
+    }
+    if ($params{text}) {
+        $self->text($params{text});
     }
 
     $self->sub_path([ qw/ replies / ]);
@@ -120,10 +139,16 @@ sub _make_uri_object{
             $params{trim_user} = $self->trim_user;
         }
         if ($self->has_attach_photo) {
-            $params{trim_attach_photo} = $self->attach_photo;
+            $params{attach_photo} = $self->attach_photo;
         }
     }
     elsif ($method eq 'POST') {
+        if ($self->has_status) {
+            $params{status} = $self->status;
+        }
+        if ($self->has_text) {
+            $params{text} = $self->text;
+        }
     }
 
     my $uri = $self->uri;

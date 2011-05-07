@@ -32,6 +32,16 @@ has access_token => (
     predicate   => 'has_access_token',
 );
 
+has refresh_token => (
+    is          => 'rw',
+    predicate   => 'has_refresh_token',
+);
+
+has expires_in => (
+    is          => 'rw',
+    predicate   => 'has_expires_in',
+);
+
 has common_params => (
     is          => 'rw',
     isa         => 'HashRef',
@@ -45,7 +55,22 @@ sub request_access_token {
         client_secret   => $self->client_secret,
         client_id       => $self->client_id,
     )->request;
+    $self->expires_in($token->expires_in);
     $self->access_token($token->token);
+    $self->refresh_token($token->refresh_token);
+    return $token;
+}
+
+sub refresh_access_token {
+    my ($self, $refresh_token) = @_;
+    my $token = Mixi::Graph::AccessToken->new(
+        refresh_token   => $refresh_token,
+        client_secret   => $self->client_secret,
+        client_id       => $self->client_id,
+    )->set_grant_type('refresh_token')->request;
+    $self->expires_in($token->expires_in);
+    $self->access_token($token->token);
+    $self->refresh_token($token->refresh_token);
     return $token;
 }
 

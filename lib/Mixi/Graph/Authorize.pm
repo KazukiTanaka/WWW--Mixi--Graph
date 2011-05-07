@@ -28,11 +28,9 @@ has permissions => (
     default     => sub { [] },
 );
 
-#TODO
-#has state => (
-#    is      => 'ro',
-#    required=> 1,
-#);
+has state => (
+    is      => 'rw',
+);
 
 
 sub extend_permissions {
@@ -53,6 +51,12 @@ sub set_response_type {
     return $self;
 }
 
+sub set_state {
+    my ($self, $state) = @_;
+    $self->state($state);
+    return $self;
+}
+
 sub uri_as_string {
     my ($self) = @_;
     my $uri = $self->oauth_uri;
@@ -60,6 +64,7 @@ sub uri_as_string {
         client_id       => $self->client_id,
         response_type   => $self->response_type,
         display         => $self->display,
+        state           => $self->state,
     );
     $query{scope} = join(' ', @{$self->permissions}) if ($self->has_permissions);
     $uri->query_form(%query);
