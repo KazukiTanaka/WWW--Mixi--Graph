@@ -11,7 +11,7 @@ use Mixi::Graph::Request::People;
 use Mixi::Graph::Request::Groups;
 use Mixi::Graph::Request::Search;
 use Mixi::Graph::Request::Voice;
-use Mixi::Graph::Photo;
+use Mixi::Graph::Request::Photo;
 use Mixi::Graph::Publish::Post;
 
 has client_id => (
@@ -133,7 +133,7 @@ sub voice {
 
 sub photo {
     my ($self) = @_;
-    return Mixi::Graph::Photo->new( %{$self->common_params} );
+    return Mixi::Graph::Request::Photo->new( %{$self->common_params} );
 }
 
 

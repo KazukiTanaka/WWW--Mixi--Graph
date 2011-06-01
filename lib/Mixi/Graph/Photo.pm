@@ -2,7 +2,7 @@ package Mixi::Graph::Photo;
 BEGIN {
   $Mixi::Graph::Photo::VERSION = '0.0001';
 }
-
+# TODO Upload 処理があるから独立実装、VoiceでもUpできるように統一する。
 use Any::Moose;
 use Mixi::Graph::Response;
 with 'Mixi::Graph::Role::Uri', 'Mixi::Graph::Role::Validator::Photo';
